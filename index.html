@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Airfare Watch — tracked airline fares rated against their route history, updated automatically.">
+<title>✈️ Airfare Watch</title>
+<style>
+  :root {
+    --bg: #0d1420;
+    --card: #151f30;
+    --card-hover: #1a2740;
+    --border: #243350;
+    --text: #e8eef7;
+    --muted: #8fa3bf;
+    --accent: #4da3ff;
+    --great: #2ecc71;
+    --good: #a3d977;
+    --fair: #f1c40f;
+    --high: #e74c3c;
+    --unrated: #7f8ea6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 1.9rem; letter-spacing: .5px; }
+  header .updated { color: var(--muted); font-size: .85rem; margin-top: 6px; }
+  header .depart { color: var(--accent); font-size: .85rem; margin-top: 2px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .filters button {
+    background: var(--card); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 16px; font-size: .85rem; cursor: pointer;
+    transition: all .15s;
+  }
+  .filters button:hover { color: var(--text); border-color: var(--accent); }
+  .filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .counters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .counter {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; text-align: center;
+  }
+  .counter .num { font-size: 1.5rem; font-weight: 700; }
+  .counter .lbl { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
+  .counter.great .num { color: var(--great); }
+  .counter.cheap .num { color: var(--accent); }
+
+  .flight-list { display: flex; flex-direction: column; gap: 12px; }
+  .flight {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; display: flex; align-items: center; gap: 14px;
+    transition: background .15s;
+  }
+  .flight:hover { background: var(--card-hover); }
+  .flight .main { flex: 1; min-width: 0; }
+  .flight .route { font-weight: 600; font-size: 1.05rem; }
+  .flight .meta { color: var(--muted); font-size: .82rem; margin-top: 4px; }
+  .flight .priceblock { text-align: right; white-space: nowrap; }
+  .flight .price { font-size: 1.35rem; font-weight: 700; }
+  .flight .median { color: var(--muted); font-size: .75rem; margin-top: 2px; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    margin-top: 6px;
+  }
+  .badge.great { background: rgba(46,204,113,.15); color: var(--great); }
+  .badge.good { background: rgba(163,217,119,.15); color: var(--good); }
+  .badge.fair { background: rgba(241,196,15,.15); color: var(--fair); }
+  .badge.high { background: rgba(231,76,60,.15); color: var(--high); }
+  .badge.unrated { background: rgba(127,142,166,.15); color: var(--unrated); }
+
+  .trend { font-size: .9rem; margin-left: 6px; }
+  .trend.up { color: var(--high); }
+  .trend.down { color: var(--great); }
+  .trend.flat { color: var(--muted); }
+
+  .state { text-align: center; color: var(--muted); padding: 40px 0; }
+  .state.error { color: var(--high); }
+  .hidden { display: none; }
+
+  footer { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 36px; line-height: 1.6; }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 520px) {
+    .flight { flex-direction: column; align-items: flex-start; }
+    .flight .priceblock { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>✈️ Airfare Watch</h1>
+    <div class="updated" id="updated">Loading…</div>
+    <div class="depart" id="depart"></div>
+  </header>
+
+  <div class="filters" id="filters">
+    <button data-filter="all" class="active">All</button>
+    <button data-filter="great">Great deals</button>
+    <button data-filter="good">Good</button>
+    <button data-filter="fair">Fair</button>
+    <button data-filter="high">High</button>
+  </div>
+
+  <div class="counters">
+    <div class="counter"><div class="num" id="c-routes">–</div><div class="lbl">Routes tracked</div></div>
+    <div class="counter great"><div class="num" id="c-great">–</div><div class="lbl">Great deals</div></div>
+    <div class="counter cheap"><div class="num" id="c-cheapest">–</div><div class="lbl">Cheapest fare</div></div>
+    <div class="counter"><div class="num" id="c-average">–</div><div class="lbl">Average fare</div></div>
+  </div>
+
+  <div class="state" id="loading">Loading fares…</div>
+  <div class="state error hidden" id="error">Unable to load fares. Please try again later.</div>
+  <div class="state hidden" id="empty">No flights match the selected filter.</div>
+  <div class="flight-list" id="list"></div>
+
+  <footer>
+    Fares sourced from the Amadeus flight data API · Ratings compare today's fare to each route's recent history<br>
+    Updates automatically every 6 hours · Prices are the cheapest found at scan time and may change
+  </footer>
+</div>
+
+<script>
+(function () {
+  var DATA = null;
+  var filter = "all";
+  var fmt = { great: "Great deal", good: "Good", fair: "Fair", high: "High", unrated: "Collecting data" };
+  var trendArrow = { up: "▲", down: "▼", flat: "—" };
+
+  function money(v, cur) {
+    if (v == null) return "–";
+    return (cur === "USD" ? "$" : cur + " ") + Number(v).toFixed(0);
+  }
+
+  function render() {
+    var list = document.getElementById("list");
+    var empty = document.getElementById("empty");
+    list.innerHTML = "";
+    if (!DATA) return;
+
+    var flights = DATA.flights.filter(function (f) {
+      return filter === "all" || f.rating === filter;
+    });
+
+    empty.classList.toggle("hidden", flights.length > 0);
+
+    flights.forEach(function (f) {
+      var card = document.createElement("div");
+      card.className = "flight";
+
+      var main = document.createElement("div");
+      main.className = "main";
+      var route = document.createElement("div");
+      route.className = "route";
+      route.textContent = f.label || f.route;
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = f.airline + " · " + (f.nonstop ? "Nonstop" : "Connecting") + " · Departs " + f.departure_date;
+      var badge = document.createElement("span");
+      badge.className = "badge " + f.rating;
+      badge.textContent = fmt[f.rating] || f.rating;
+      main.appendChild(route);
+      main.appendChild(meta);
+      main.appendChild(badge);
+
+      var pb = document.createElement("div");
+      pb.className = "priceblock";
+      var price = document.createElement("div");
+      price.className = "price";
+      price.textContent = money(f.price, f.currency);
+      var tr = document.createElement("span");
+      tr.className = "trend " + f.trend;
+      tr.textContent = trendArrow[f.trend] || "";
+      price.appendChild(tr);
+      pb.appendChild(price);
+      if (f.median_price != null) {
+        var med = document.createElement("div");
+        med.className = "median";
+        med.textContent = "typical " + money(f.median_price, f.currency);
+        pb.appendChild(med);
+      }
+
+      card.appendChild(main);
+      card.appendChild(pb);
+      list.appendChild(card);
+    });
+  }
+
+  function hydrate(data) {
+    DATA = data;
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("updated").textContent =
+      "Last updated: " + new Date(data.updated).toLocaleString();
+    document.getElementById("depart").textContent =
+      "Showing cheapest one-way fares departing " + data.departure_date;
+
+    var s = data.summary || {};
+    document.getElementById("c-routes").textContent = s.routes_tracked != null ? s.routes_tracked : "–";
+    document.getElementById("c-great").textContent = s.great_deals != null ? s.great_deals : "–";
+    document.getElementById("c-cheapest").textContent = money(s.cheapest, data.currency);
+    document.getElementById("c-average").textContent = money(s.average, data.currency);
+    render();
+  }
+
+  document.getElementById("filters").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    filter = e.target.dataset.filter;
+    document.querySelectorAll(".filters button").forEach(function (b) {
+      b.classList.toggle("active", b === e.target);
+    });
+    render();
+  });
+
+  fetch("data/prices.json", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(hydrate)
+    .catch(function () {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("error").classList.remove("hidden");
+    });
+})();
+</script>
+</body>
+</html>
