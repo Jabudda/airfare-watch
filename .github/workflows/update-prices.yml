@@ -20,7 +20,7 @@ jobs:
 
       - name: Run scraper
         env:
-          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVEL }}
         run: python3 scraper.py
 
       - name: Commit updated data
