@@ -56,12 +56,17 @@
 
   .flight-list { display: flex; flex-direction: column; gap: 12px; }
   .tier-header {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px;
     font-size: 1.05rem; font-weight: 700; letter-spacing: .4px;
     margin: 14px 0 2px; padding-bottom: 8px;
     border-bottom: 1px solid var(--border); color: var(--text);
   }
   .tier-header:first-child { margin-top: 0; }
-  .tier-header .count { color: var(--muted); font-weight: 400; font-size: .85rem; margin-left: 8px; }
+  .tier-header .count { color: var(--muted); font-weight: 400; font-size: .85rem; }
+  .tier-header .stats { margin-left: auto; color: var(--muted); font-weight: 400; font-size: .8rem; }
+  .tier-header .stats b { color: var(--accent); font-weight: 700; }
+  .flight.cheapest { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .badge.cheapest { background: rgba(77,163,255,.15); color: var(--accent); margin-left: 6px; }
   .flight {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 16px; display: flex; align-items: center; gap: 14px;
@@ -131,8 +136,8 @@
   <div class="counters">
     <div class="counter"><div class="num" id="c-routes">–</div><div class="lbl">Routes tracked</div></div>
     <div class="counter great"><div class="num" id="c-great">–</div><div class="lbl">Great deals</div></div>
-    <div class="counter cheap"><div class="num" id="c-cheapest">–</div><div class="lbl">Cheapest fare</div></div>
-    <div class="counter"><div class="num" id="c-average">–</div><div class="lbl">Average fare</div></div>
+    <div class="counter cheap"><div class="num" id="c-cheap-domestic">–</div><div class="lbl">Cheapest domestic</div></div>
+    <div class="counter cheap"><div class="num" id="c-cheap-retirement">–</div><div class="lbl">Cheapest international</div></div>
   </div>
 
   <div class="state" id="loading">Loading fares…</div>
@@ -183,23 +188,42 @@
       if (tierOrder.indexOf(t) === -1) tierOrder.push(t);
     });
 
+    // Per-tier stats from the full dataset (stable regardless of filter).
+    var tierStats = {};
+    DATA.flights.forEach(function (f) {
+      var t = f.tier || "other";
+      var s = tierStats[t] || (tierStats[t] = { min: null, sum: 0, n: 0, cheapestRoute: null });
+      s.sum += f.price; s.n += 1;
+      if (s.min === null || f.price < s.min) { s.min = f.price; s.cheapestRoute = f.route; }
+    });
+
     tierOrder.forEach(function (t) {
       var group = groups[t];
       if (!group || !group.length) return;
+      var s = tierStats[t] || {};
       var h = document.createElement("div");
       h.className = "tier-header";
-      h.textContent = tiers[t] || t;
+      var name = document.createElement("span");
+      name.textContent = tiers[t] || t;
+      h.appendChild(name);
       var c = document.createElement("span");
       c.className = "count";
       c.textContent = group.length + (group.length === 1 ? " route" : " routes");
       h.appendChild(c);
+      var st = document.createElement("span");
+      st.className = "stats";
+      st.innerHTML = "from <b>" + money(s.min, DATA.currency) + "</b> · avg " +
+                     money(s.n ? s.sum / s.n : null, DATA.currency);
+      h.appendChild(st);
       list.appendChild(h);
-      group.forEach(renderCard);
+      group.forEach(function (f) {
+        renderCard(f, f.route === s.cheapestRoute);
+      });
     });
 
-    function renderCard(f) {
+    function renderCard(f, isCheapest) {
       var card = document.createElement("div");
-      card.className = "flight";
+      card.className = "flight" + (isCheapest ? " cheapest" : "");
 
       // Airline logo — clickable through to the airline's website.
       var logos = DATA.logos || {};
@@ -238,6 +262,12 @@
       main.appendChild(route);
       main.appendChild(meta);
       main.appendChild(badge);
+      if (isCheapest) {
+        var star = document.createElement("span");
+        star.className = "badge cheapest";
+        star.textContent = "⭐ Cheapest";
+        main.appendChild(star);
+      }
 
       var pb = document.createElement("div");
       pb.className = "priceblock";
@@ -282,8 +312,13 @@
     var s = data.summary || {};
     document.getElementById("c-routes").textContent = s.routes_tracked != null ? s.routes_tracked : "–";
     document.getElementById("c-great").textContent = s.great_deals != null ? s.great_deals : "–";
-    document.getElementById("c-cheapest").textContent = money(s.cheapest, data.currency);
-    document.getElementById("c-average").textContent = money(s.average, data.currency);
+    var cheap = { domestic: null, retirement: null };
+    data.flights.forEach(function (f) {
+      var t = f.tier || "other";
+      if (t in cheap && (cheap[t] === null || f.price < cheap[t])) cheap[t] = f.price;
+    });
+    document.getElementById("c-cheap-domestic").textContent = money(cheap.domestic, data.currency);
+    document.getElementById("c-cheap-retirement").textContent = money(cheap.retirement, data.currency);
     render();
   }
 
