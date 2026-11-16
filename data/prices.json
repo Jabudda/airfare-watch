@@ -8,7 +8,7 @@
   },
   "summary": {
     "routes_tracked": 13,
-    "great_deals": 4,
+    "great_deals": 0,
     "cheapest": 60.0,
     "average": 288.08
   },
@@ -24,9 +24,9 @@
       "nonstop": true,
       "departure_date": "2026-12-16",
       "tier": "domestic",
-      "rating": "great",
-      "trend": "down",
-      "median_price": 87.81
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-MIA",
@@ -39,9 +39,9 @@
       "nonstop": true,
       "departure_date": "2026-12-08",
       "tier": "domestic",
-      "rating": "great",
-      "trend": "down",
-      "median_price": 98.57
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-LAS",
@@ -54,9 +54,9 @@
       "nonstop": true,
       "departure_date": "2026-12-05",
       "tier": "domestic",
-      "rating": "high",
-      "trend": "up",
-      "median_price": 76.23
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-NYC",
@@ -69,9 +69,9 @@
       "nonstop": false,
       "departure_date": "2026-12-15",
       "tier": "domestic",
-      "rating": "good",
-      "trend": "up",
-      "median_price": 109.25
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-ORL",
@@ -84,9 +84,9 @@
       "nonstop": false,
       "departure_date": "2026-12-22",
       "tier": "domestic",
-      "rating": "good",
-      "trend": "down",
-      "median_price": 108.1
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-LAX",
@@ -99,9 +99,9 @@
       "nonstop": false,
       "departure_date": "2026-12-07",
       "tier": "domestic",
-      "rating": "good",
-      "trend": "up",
-      "median_price": 117.69
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-MEX",
@@ -114,9 +114,9 @@
       "nonstop": true,
       "departure_date": "2026-12-05",
       "tier": "retirement",
-      "rating": "great",
-      "trend": "down",
-      "median_price": 269.22
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-CUN",
@@ -129,9 +129,9 @@
       "nonstop": false,
       "departure_date": "2026-12-24",
       "tier": "retirement",
-      "rating": "high",
-      "trend": "up",
-      "median_price": 222.93
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-LIS",
@@ -144,9 +144,9 @@
       "nonstop": true,
       "departure_date": "2026-12-06",
       "tier": "retirement",
-      "rating": "great",
-      "trend": "down",
-      "median_price": 490.76
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-SJO",
@@ -159,9 +159,9 @@
       "nonstop": false,
       "departure_date": "2026-12-11",
       "tier": "retirement",
-      "rating": "fair",
-      "trend": "up",
-      "median_price": 297.05
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-PTY",
@@ -174,9 +174,9 @@
       "nonstop": false,
       "departure_date": "2026-12-17",
       "tier": "retirement",
-      "rating": "high",
-      "trend": "up",
-      "median_price": 366.29
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-BKK",
@@ -189,9 +189,9 @@
       "nonstop": false,
       "departure_date": "2026-12-06",
       "tier": "retirement",
-      "rating": "good",
-      "trend": "down",
-      "median_price": 738.36
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     },
     {
       "route": "CHI-KUL",
@@ -204,9 +204,9 @@
       "nonstop": false,
       "departure_date": "2026-12-10",
       "tier": "retirement",
-      "rating": "good",
-      "trend": "up",
-      "median_price": 902.64
+      "rating": "unrated",
+      "trend": "flat",
+      "median_price": null
     }
   ]
 }
