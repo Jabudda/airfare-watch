@@ -10,6 +10,17 @@
     { "origin": "CHI", "destination": "CUN", "label": "Chicago → Cancún" },
     { "origin": "CHI", "destination": "LON", "label": "Chicago → London" },
     { "origin": "CHI", "destination": "LAS", "label": "Chicago → Las Vegas" },
-    { "origin": "CHI", "destination": "ORL", "label": "Chicago → Orlando" }
+    { "origin": "CHI", "destination": "ORL", "label": "Chicago → Orlando" },
+    { "origin": "CHI", "destination": "BKK", "label": "Chicago → Bangkok, Thailand" },
+    { "origin": "CHI", "destination": "CNX", "label": "Chicago → Chiang Mai, Thailand" },
+    { "origin": "CHI", "destination": "MEX", "label": "Chicago → Mexico City, Mexico" },
+    { "origin": "CHI", "destination": "LIS", "label": "Chicago → Lisbon, Portugal" },
+    { "origin": "CHI", "destination": "SJO", "label": "Chicago → San José, Costa Rica" },
+    { "origin": "CHI", "destination": "PTY", "label": "Chicago → Panama City, Panama" },
+    { "origin": "CHI", "destination": "MDE", "label": "Chicago → Medellín, Colombia" },
+    { "origin": "CHI", "destination": "UIO", "label": "Chicago → Quito, Ecuador" },
+    { "origin": "CHI", "destination": "MNL", "label": "Chicago → Manila, Philippines" },
+    { "origin": "CHI", "destination": "SGN", "label": "Chicago → Ho Chi Minh City, Vietnam" },
+    { "origin": "CHI", "destination": "KUL", "label": "Chicago → Kuala Lumpur, Malaysia" }
   ]
 }

@@ -147,6 +147,9 @@ SAMPLE_AIRLINES = ["United", "American", "Delta", "Spirit", "Frontier", "British
 SAMPLE_BASE = {  # rough realistic one-way fares
     "LAX": 128, "NYC": 112, "MIA": 98, "DEN": 84,
     "CUN": 215, "LON": 480, "LAS": 76, "ORL": 92,
+    "BKK": 720, "CNX": 790, "MEX": 240, "LIS": 440,
+    "SJO": 310, "PTY": 330, "MDE": 360, "UIO": 420,
+    "MNL": 820, "SGN": 870, "KUL": 850,
 }
 
 
