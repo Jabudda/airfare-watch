@@ -37,15 +37,60 @@ HISTORY_FILE = DATA_DIR / "history.json"
 
 API_URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
 
-# Friendly names for common carrier codes (API returns IATA codes).
+# Friendly names and websites for carrier codes (API returns IATA codes).
 AIRLINES = {
-    "UA": "United", "AA": "American", "DL": "Delta", "WN": "Southwest",
-    "NK": "Spirit", "F9": "Frontier", "B6": "JetBlue", "AS": "Alaska",
-    "BA": "British Airways", "VS": "Virgin Atlantic", "AC": "Air Canada",
-    "AM": "Aeroméxico", "Y4": "Volaris", "VB": "Viva Aerobus",
-    "IB": "Iberia", "AY": "Finnair", "LH": "Lufthansa", "AF": "Air France",
-    "KL": "KLM", "EI": "Aer Lingus", "TP": "TAP Portugal",
+    "UA": ("United", "https://www.united.com"),
+    "AA": ("American", "https://www.aa.com"),
+    "DL": ("Delta", "https://www.delta.com"),
+    "WN": ("Southwest", "https://www.southwest.com"),
+    "NK": ("Spirit", "https://www.spirit.com"),
+    "F9": ("Frontier", "https://www.flyfrontier.com"),
+    "B6": ("JetBlue", "https://www.jetblue.com"),
+    "AS": ("Alaska", "https://www.alaskaair.com"),
+    "G4": ("Allegiant", "https://www.allegiantair.com"),
+    "SY": ("Sun Country", "https://www.suncountry.com"),
+    "BA": ("British Airways", "https://www.britishairways.com"),
+    "VS": ("Virgin Atlantic", "https://www.virginatlantic.com"),
+    "AC": ("Air Canada", "https://www.aircanada.com"),
+    "AM": ("Aeroméxico", "https://www.aeromexico.com"),
+    "Y4": ("Volaris", "https://www.volaris.com"),
+    "VB": ("Viva Aerobus", "https://www.vivaaerobus.com"),
+    "CM": ("Copa Airlines", "https://www.copaair.com"),
+    "AV": ("Avianca", "https://www.avianca.com"),
+    "LA": ("LATAM", "https://www.latamairlines.com"),
+    "IB": ("Iberia", "https://www.iberia.com"),
+    "AY": ("Finnair", "https://www.finnair.com"),
+    "LH": ("Lufthansa", "https://www.lufthansa.com"),
+    "AF": ("Air France", "https://www.airfrance.com"),
+    "KL": ("KLM", "https://www.klm.com"),
+    "EI": ("Aer Lingus", "https://www.aerlingus.com"),
+    "TP": ("TAP Portugal", "https://www.flytap.com"),
+    "TK": ("Turkish Airlines", "https://www.turkishairlines.com"),
+    "EK": ("Emirates", "https://www.emirates.com"),
+    "QR": ("Qatar Airways", "https://www.qatarairways.com"),
+    "EY": ("Etihad", "https://www.etihad.com"),
+    "JL": ("Japan Airlines", "https://www.jal.com"),
+    "NH": ("ANA", "https://www.ana.co.jp"),
+    "KE": ("Korean Air", "https://www.koreanair.com"),
+    "OZ": ("Asiana", "https://flyasiana.com"),
+    "CX": ("Cathay Pacific", "https://www.cathaypacific.com"),
+    "SQ": ("Singapore Airlines", "https://www.singaporeair.com"),
+    "MH": ("Malaysia Airlines", "https://www.malaysiaairlines.com"),
+    "TG": ("Thai Airways", "https://www.thaiairways.com"),
+    "VN": ("Vietnam Airlines", "https://www.vietnamairlines.com"),
+    "PR": ("Philippine Airlines", "https://www.philippineairlines.com"),
+    "BR": ("EVA Air", "https://www.evaair.com"),
+    "CI": ("China Airlines", "https://www.china-airlines.com"),
 }
+
+LOGOS_FILE = DATA_DIR / "logos.json"
+LOGO_URL = "https://pics.avs.io/120/120/{code}.png"  # Travelpayouts airline logo CDN
+FARE_BASE = "https://www.aviasales.com"
+
+
+def airline_info(code):
+    name, url = AIRLINES.get(code, (code or "Various", None))
+    return name, url
 
 
 # ---------------------------------------------------------------- helpers
@@ -74,8 +119,37 @@ def http_get_json(url, params):
 
 # ---------------------------------------------------------------- fetch
 
+def fetch_logo_b64(code):
+    """Fetch an airline logo from the Travelpayouts CDN as a data URI, or None."""
+    import base64
+    try:
+        req = urllib.request.Request(LOGO_URL.format(code=code),
+                                     headers={"User-Agent": "airfare-watch"})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            raw = resp.read()
+        return "data:image/png;base64," + base64.b64encode(raw).decode()
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! logo {code}: {e}", file=sys.stderr)
+        return None
+
+
+def update_logo_cache(codes):
+    """Return {code: data_uri} for the given codes, fetching any not cached."""
+    cache = load_json(LOGOS_FILE, {})
+    changed = False
+    for code in sorted(codes):
+        if code and code not in cache:
+            uri = fetch_logo_b64(code)
+            if uri:
+                cache[code] = uri
+                changed = True
+    if changed:
+        save_json(LOGOS_FILE, cache)
+    return {c: cache[c] for c in codes if c in cache}
+
+
 def fetch_cheapest_fare(token, origin, destination, month, currency):
-    """Return (price, airline, nonstop, depart_date) or None.
+    """Return (price, airline_code, nonstop, depart_date, fare_link) or None.
 
     Queries the Aviasales price-calendar cache for the cheapest fare found
     recently for this route in the given month (YYYY-MM).
@@ -103,10 +177,11 @@ def fetch_cheapest_fare(token, origin, destination, month, currency):
     best = min(offers, key=lambda o: float(o["price"]))
     price = float(best["price"])
     code = best.get("airline", "")
-    airline = AIRLINES.get(code, code or "Various")
     nonstop = best.get("transfers", 1) == 0
     depart = (best.get("departure_at") or month)[:10]
-    return price, airline, nonstop, depart
+    link = best.get("link")
+    fare_link = FARE_BASE + link if link else None
+    return price, code, nonstop, depart, fare_link
 
 
 # ---------------------------------------------------------------- ratings
@@ -142,7 +217,7 @@ def trend(price, history_prices):
 
 # ---------------------------------------------------------------- sample mode
 
-SAMPLE_AIRLINES = ["United", "American", "Delta", "Spirit", "Frontier", "British Airways"]
+SAMPLE_AIRLINES = ["UA", "AA", "DL", "NK", "F9", "BA"]
 
 SAMPLE_BASE = {  # rough realistic one-way fares
     "LAX": 128, "NYC": 112, "MIA": 98, "DEN": 84,
@@ -205,6 +280,7 @@ def main():
                 random.choice(SAMPLE_AIRLINES),
                 random.random() > 0.4,
                 target.strftime("%Y-%m-%d"),
+                None,
             )
         else:
             result = fetch_cheapest_fare(token, origin, dest, month, currency)
@@ -212,7 +288,8 @@ def main():
         if result is None:
             continue
 
-        price, airline, nonstop, depart_date = result
+        price, code, nonstop, depart_date, fare_link = result
+        airline, airline_url = airline_info(code)
         past = history.get(key, [])
         flights.append({
             "route": key,
@@ -222,6 +299,9 @@ def main():
             "price": price,
             "currency": currency,
             "airline": airline,
+            "airline_code": code,
+            "airline_url": airline_url,
+            "link": fare_link,
             "nonstop": nonstop,
             "departure_date": depart_date,
             "tier": route.get("tier", "other"),
@@ -239,12 +319,15 @@ def main():
         "average": round(sum(f["price"] for f in flights) / len(flights), 2) if flights else None,
     }
 
+    logos = update_logo_cache({f["airline_code"] for f in flights if f["airline_code"]})
+
     save_json(PRICES_FILE, {
         "updated": now_iso,
         "departure_date": month,
         "currency": currency,
         "tiers": config.get("tiers", {}),
         "summary": summary,
+        "logos": logos,
         "flights": sorted(flights, key=lambda f: f["price"]),
     })
     save_json(HISTORY_FILE, history)

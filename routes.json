@@ -13,6 +13,12 @@
     { "origin": "CHI", "destination": "DEN", "label": "Chicago → Denver", "tier": "domestic" },
     { "origin": "CHI", "destination": "LAS", "label": "Chicago → Las Vegas", "tier": "domestic" },
     { "origin": "CHI", "destination": "ORL", "label": "Chicago → Orlando", "tier": "domestic" },
+    { "origin": "MKE", "destination": "LAX", "label": "Milwaukee → Los Angeles", "tier": "domestic" },
+    { "origin": "MKE", "destination": "NYC", "label": "Milwaukee → New York", "tier": "domestic" },
+    { "origin": "MKE", "destination": "MIA", "label": "Milwaukee → Miami", "tier": "domestic" },
+    { "origin": "MKE", "destination": "DEN", "label": "Milwaukee → Denver", "tier": "domestic" },
+    { "origin": "MKE", "destination": "LAS", "label": "Milwaukee → Las Vegas", "tier": "domestic" },
+    { "origin": "MKE", "destination": "ORL", "label": "Milwaukee → Orlando", "tier": "domestic" },
     { "origin": "CHI", "destination": "MEX", "label": "Chicago → Mexico City, Mexico", "tier": "retirement" },
     { "origin": "CHI", "destination": "CUN", "label": "Chicago → Cancún, Mexico", "tier": "retirement" },
     { "origin": "CHI", "destination": "SJO", "label": "Chicago → San José, Costa Rica", "tier": "retirement" },
@@ -24,6 +30,18 @@
     { "origin": "CHI", "destination": "CNX", "label": "Chicago → Chiang Mai, Thailand", "tier": "retirement" },
     { "origin": "CHI", "destination": "MNL", "label": "Chicago → Manila, Philippines", "tier": "retirement" },
     { "origin": "CHI", "destination": "SGN", "label": "Chicago → Ho Chi Minh City, Vietnam", "tier": "retirement" },
-    { "origin": "CHI", "destination": "KUL", "label": "Chicago → Kuala Lumpur, Malaysia", "tier": "retirement" }
+    { "origin": "CHI", "destination": "KUL", "label": "Chicago → Kuala Lumpur, Malaysia", "tier": "retirement" },
+    { "origin": "MKE", "destination": "MEX", "label": "Milwaukee → Mexico City, Mexico", "tier": "retirement" },
+    { "origin": "MKE", "destination": "CUN", "label": "Milwaukee → Cancún, Mexico", "tier": "retirement" },
+    { "origin": "MKE", "destination": "SJO", "label": "Milwaukee → San José, Costa Rica", "tier": "retirement" },
+    { "origin": "MKE", "destination": "PTY", "label": "Milwaukee → Panama City, Panama", "tier": "retirement" },
+    { "origin": "MKE", "destination": "MDE", "label": "Milwaukee → Medellín, Colombia", "tier": "retirement" },
+    { "origin": "MKE", "destination": "UIO", "label": "Milwaukee → Quito, Ecuador", "tier": "retirement" },
+    { "origin": "MKE", "destination": "LIS", "label": "Milwaukee → Lisbon, Portugal", "tier": "retirement" },
+    { "origin": "MKE", "destination": "BKK", "label": "Milwaukee → Bangkok, Thailand", "tier": "retirement" },
+    { "origin": "MKE", "destination": "CNX", "label": "Milwaukee → Chiang Mai, Thailand", "tier": "retirement" },
+    { "origin": "MKE", "destination": "MNL", "label": "Milwaukee → Manila, Philippines", "tier": "retirement" },
+    { "origin": "MKE", "destination": "SGN", "label": "Milwaukee → Ho Chi Minh City, Vietnam", "tier": "retirement" },
+    { "origin": "MKE", "destination": "KUL", "label": "Milwaukee → Kuala Lumpur, Malaysia", "tier": "retirement" }
   ]
 }
