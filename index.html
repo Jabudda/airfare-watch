@@ -2,136 +2,230 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Airfare Watch — tracked airline fares rated against their route history, updated automatically.">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>✈️ Airfare Watch</title>
 <style>
   :root {
-    --bg: #0d1420;
-    --card: #151f30;
-    --card-hover: #1a2740;
-    --border: #243350;
-    --text: #e8eef7;
-    --muted: #8fa3bf;
-    --accent: #4da3ff;
-    --great: #2ecc71;
-    --good: #a3d977;
-    --fair: #f1c40f;
-    --high: #e74c3c;
-    --unrated: #7f8ea6;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --elevated: rgba(255,255,255,.72);
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --hairline: rgba(0,0,0,.08);
+    --accent: #0071e3;
+    --great: #34c759;
+    --good: #30b457;
+    --fair: #ff9f0a;
+    --high: #ff3b30;
+    --unrated: #8e8e93;
+    --seg-bg: rgba(118,118,128,.12);
+    --seg-active: #ffffff;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-press: 0 1px 2px rgba(0,0,0,.05);
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --elevated: rgba(28,28,30,.72);
+      --text: #f5f5f7;
+      --muted: #98989d;
+      --hairline: rgba(255,255,255,.1);
+      --accent: #0a84ff;
+      --great: #30d158;
+      --good: #28bd4c;
+      --fair: #ffd60a;
+      --high: #ff453a;
+      --unrated: #8e8e93;
+      --seg-bg: rgba(118,118,128,.24);
+      --seg-active: #636366;
+      --shadow: none;
+      --shadow-press: none;
+    }
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
-    padding: 24px 16px 60px;
+    padding-bottom: calc(48px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
   }
-  .container { max-width: 860px; margin: 0 auto; }
+  .container { max-width: 760px; margin: 0 auto; padding: 0 16px; }
 
-  header { text-align: center; margin-bottom: 24px; }
-  header h1 { font-size: 1.9rem; letter-spacing: .5px; }
-  header .updated { color: var(--muted); font-size: .85rem; margin-top: 6px; }
-  header .depart { color: var(--accent); font-size: .85rem; margin-top: 2px; }
-
-  .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
-  .filters button {
-    background: var(--card); color: var(--muted); border: 1px solid var(--border);
-    border-radius: 999px; padding: 7px 16px; font-size: .85rem; cursor: pointer;
-    transition: all .15s;
+  /* ------- frosted sticky top bar ------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--elevated);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--hairline);
+    padding-top: env(safe-area-inset-top);
   }
-  .filters button:hover { color: var(--text); border-color: var(--accent); }
-  .filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .topbar-inner {
+    max-width: 760px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar .mini-title { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+  .topbar .mini-sub { margin-left: auto; color: var(--muted); font-size: .8rem; }
 
-  .counters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  /* ------- hero ------- */
+  header.hero { text-align: left; padding: 26px 0 6px; }
+  header.hero h1 {
+    font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1;
+  }
+  header.hero .sub { color: var(--muted); font-size: .95rem; margin-top: 6px; }
+
+  /* ------- stat counters ------- */
+  .counters {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin: 18px 0 6px;
+  }
+  @media (max-width: 560px) { .counters { grid-template-columns: repeat(2, 1fr); } }
   .counter {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px; text-align: center;
+    background: var(--card); border-radius: 16px; padding: 14px 14px 12px;
+    box-shadow: var(--shadow); border: 1px solid var(--hairline);
   }
-  .counter .num { font-size: 1.5rem; font-weight: 700; }
-  .counter .lbl { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
+  .counter .num {
+    font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter .lbl { color: var(--muted); font-size: .74rem; margin-top: 3px; }
   .counter.great .num { color: var(--great); }
   .counter.cheap .num { color: var(--accent); }
 
-  .flight-list { display: flex; flex-direction: column; gap: 12px; }
+  /* ------- segmented controls ------- */
+  .controls { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 20px; }
+  .segment {
+    display: flex; background: var(--seg-bg); border-radius: 12px; padding: 2px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .segment::-webkit-scrollbar { display: none; }
+  .segment button {
+    flex: 1; min-width: max-content; border: 0; background: transparent;
+    color: var(--text); font: inherit; font-size: .85rem; font-weight: 500;
+    padding: 7px 14px; border-radius: 10px; cursor: pointer;
+    transition: background .18s ease, box-shadow .18s ease, color .18s ease;
+    white-space: nowrap;
+  }
+  .segment button.active {
+    background: var(--seg-active); box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    font-weight: 600;
+  }
+  .segment button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ------- tier sections ------- */
   .tier-header {
-    display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px;
-    font-size: 1.05rem; font-weight: 700; letter-spacing: .4px;
-    margin: 14px 0 2px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--border); color: var(--text);
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px;
+    font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em;
+    margin: 26px 0 10px;
   }
-  .tier-header:first-child { margin-top: 0; }
-  .tier-header .count { color: var(--muted); font-weight: 400; font-size: .85rem; }
-  .tier-header .stats { margin-left: auto; color: var(--muted); font-weight: 400; font-size: .8rem; }
+  .tier-header:first-child { margin-top: 10px; }
+  .tier-header .count { color: var(--muted); font-weight: 500; font-size: .82rem; }
+  .tier-header .stats { margin-left: auto; color: var(--muted); font-weight: 400; font-size: .8rem; font-variant-numeric: tabular-nums; }
   .tier-header .stats b { color: var(--accent); font-weight: 700; }
-  .flight.cheapest { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-  .badge.cheapest { background: rgba(77,163,255,.15); color: var(--accent); margin-left: 6px; }
+
+  /* ------- flight cards ------- */
+  .flight-list { display: flex; flex-direction: column; gap: 10px; }
   .flight {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px; display: flex; align-items: center; gap: 14px;
-    transition: background .15s;
+    background: var(--card); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
+    animation: rise .35s ease backwards;
   }
-  .flight:hover { background: var(--card-hover); }
+  .flight.tappable { cursor: pointer; }
+  .flight.tappable:active { transform: scale(.985); box-shadow: var(--shadow-press); }
+  .flight:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .flight { animation: none; }
+    .flight.tappable:active { transform: none; }
+  }
+
+  .flight.cheapest { border-color: var(--accent); }
+
   .flight .logo {
-    flex: none; width: 46px; height: 46px; border-radius: 10px;
+    flex: none; width: 46px; height: 46px; border-radius: 12px;
     background: #fff; display: flex; align-items: center; justify-content: center;
     overflow: hidden; text-decoration: none;
+    border: 1px solid var(--hairline);
   }
   .flight .logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; box-sizing: border-box; }
   .flight .logo .code { font-weight: 700; font-size: .78rem; color: #1b2a44; }
-  .flight .price a { color: var(--accent); text-decoration: none; }
-  .flight .price a:hover { text-decoration: underline; }
-  .flight .route { font-weight: 600; font-size: 1.05rem; }
-  .flight .meta { color: var(--muted); font-size: .82rem; margin-top: 4px; }
-  .flight .priceblock { text-align: right; white-space: nowrap; }
-  .flight .price { font-size: 1.35rem; font-weight: 700; }
-  .flight .median { color: var(--muted); font-size: .75rem; margin-top: 2px; }
+
+  .flight .main { flex: 1; min-width: 0; }
+  .flight .route { font-weight: 600; font-size: 1rem; letter-spacing: -.01em; }
+  .flight .meta { color: var(--muted); font-size: .8rem; margin-top: 3px; }
 
   .badge {
-    display: inline-block; padding: 3px 10px; border-radius: 999px;
-    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
-    margin-top: 6px;
+    display: inline-block; padding: 3px 9px; border-radius: 999px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    margin-top: 7px; margin-right: 6px;
   }
-  .badge.great { background: rgba(46,204,113,.15); color: var(--great); }
-  .badge.good { background: rgba(163,217,119,.15); color: var(--good); }
-  .badge.fair { background: rgba(241,196,15,.15); color: var(--fair); }
-  .badge.high { background: rgba(231,76,60,.15); color: var(--high); }
-  .badge.unrated { background: rgba(127,142,166,.15); color: var(--unrated); }
+  .badge.great { background: rgba(52,199,89,.14); color: var(--great); }
+  .badge.good { background: rgba(48,180,87,.14); color: var(--good); }
+  .badge.fair { background: rgba(255,159,10,.14); color: var(--fair); }
+  .badge.high { background: rgba(255,59,48,.14); color: var(--high); }
+  .badge.unrated { background: rgba(142,142,147,.14); color: var(--unrated); }
+  .badge.cheapest { background: rgba(10,132,255,.14); color: var(--accent); }
 
-  .trend { font-size: .9rem; margin-left: 6px; }
+  .flight .priceblock { text-align: right; white-space: nowrap; flex: none; }
+  .flight .price {
+    font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .flight .price .chev { color: var(--muted); font-weight: 400; margin-left: 2px; }
+  .flight .median { color: var(--muted); font-size: .74rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .trend { font-size: .85rem; margin-left: 5px; }
   .trend.up { color: var(--high); }
   .trend.down { color: var(--great); }
   .trend.flat { color: var(--muted); }
+
+  /* ------- skeleton loading ------- */
+  .skeleton .flight { pointer-events: none; }
+  .sk { background: var(--seg-bg); border-radius: 8px; position: relative; overflow: hidden; }
+  .sk::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  @media (prefers-color-scheme: dark) {
+    .sk::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
+  }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .sk::after { animation: none; } }
 
   .state { text-align: center; color: var(--muted); padding: 40px 0; }
   .state.error { color: var(--high); }
   .hidden { display: none; }
 
-  footer { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 36px; line-height: 1.6; }
-  footer a { color: var(--accent); text-decoration: none; }
-
-  @media (max-width: 520px) {
-    .flight { flex-direction: column; align-items: flex-start; }
-    .flight .priceblock { text-align: left; }
+  footer {
+    text-align: center; color: var(--muted); font-size: .75rem;
+    margin-top: 40px; line-height: 1.7; padding: 0 8px;
   }
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>✈️ Airfare Watch</h1>
-    <div class="updated" id="updated">Loading…</div>
-    <div class="depart" id="depart"></div>
-  </header>
 
-  <div class="filters" id="filters">
-    <button data-filter="all" class="active">All</button>
-    <button data-filter="great">Great deals</button>
-    <button data-filter="good">Good</button>
-    <button data-filter="fair">Fair</button>
-    <button data-filter="high">High</button>
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="mini-title">✈️ Airfare Watch</span>
+    <span class="mini-sub" id="updated">Loading…</span>
   </div>
+</div>
+
+<div class="container">
+  <header class="hero">
+    <h1>Where can you fly<br>for less today?</h1>
+    <div class="sub" id="depart"></div>
+  </header>
 
   <div class="counters">
     <div class="counter"><div class="num" id="c-routes">–</div><div class="lbl">Routes tracked</div></div>
@@ -140,27 +234,65 @@
     <div class="counter cheap"><div class="num" id="c-cheap-retirement">–</div><div class="lbl">Cheapest international</div></div>
   </div>
 
-  <div class="state" id="loading">Loading fares…</div>
+  <div class="controls">
+    <div class="segment" id="rating-filter" role="tablist" aria-label="Filter by deal rating">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="great">Great deals</button>
+      <button data-filter="good">Good</button>
+      <button data-filter="fair">Fair</button>
+      <button data-filter="high">High</button>
+    </div>
+    <div class="segment hidden" id="origin-filter" role="tablist" aria-label="Filter by departure city"></div>
+  </div>
+
+  <div class="flight-list skeleton" id="loading">
+    <div class="flight"><div class="sk" style="width:46px;height:46px;border-radius:12px"></div>
+      <div class="main"><div class="sk" style="width:60%;height:14px"></div><div class="sk" style="width:40%;height:10px;margin-top:8px"></div></div>
+      <div class="sk" style="width:64px;height:22px"></div></div>
+    <div class="flight"><div class="sk" style="width:46px;height:46px;border-radius:12px"></div>
+      <div class="main"><div class="sk" style="width:55%;height:14px"></div><div class="sk" style="width:35%;height:10px;margin-top:8px"></div></div>
+      <div class="sk" style="width:64px;height:22px"></div></div>
+    <div class="flight"><div class="sk" style="width:46px;height:46px;border-radius:12px"></div>
+      <div class="main"><div class="sk" style="width:65%;height:14px"></div><div class="sk" style="width:45%;height:10px;margin-top:8px"></div></div>
+      <div class="sk" style="width:64px;height:22px"></div></div>
+  </div>
   <div class="state error hidden" id="error">Unable to load fares. Please try again later.</div>
-  <div class="state hidden" id="empty">No flights match the selected filter.</div>
+  <div class="state hidden" id="empty">No flights match the selected filters.</div>
   <div class="flight-list" id="list"></div>
 
   <footer>
-    Fares from the Travelpayouts (Aviasales) data API — prices recently found by real searches, not live quotes<br>
-    Updates automatically every 6 hours · Ratings compare each fare to the route's recent history
+    Fares from the Travelpayouts (Aviasales) data API — prices recently found by real searches, not live quotes.<br>
+    Updates automatically every 6 hours · Ratings compare each fare to the route's recent history.<br>
+    Tap a fare to view it · Tap an airline logo to open the airline's site.
   </footer>
 </div>
 
 <script>
 (function () {
   var DATA = null;
-  var filter = "all";
+  var ratingFilter = "all";
+  var originFilter = "all";
   var fmt = { great: "Great deal", good: "Good", fair: "Fair", high: "High", unrated: "Collecting data" };
   var trendArrow = { up: "▲", down: "▼", flat: "—" };
 
   function money(v, cur) {
     if (v == null) return "–";
-    return (cur === "USD" ? "$" : cur + " ") + Number(v).toFixed(0);
+    return (cur === "USD" ? "$" : cur + " ") + Math.round(Number(v));
+  }
+
+  function relativeTime(iso) {
+    var mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return "Updated just now";
+    if (mins < 60) return "Updated " + mins + " min ago";
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24) return "Updated " + hrs + (hrs === 1 ? " hour ago" : " hours ago");
+    return "Updated " + new Date(iso).toLocaleDateString();
+  }
+
+  function originLabel(f) {
+    var label = f.label || "";
+    var idx = label.indexOf(" → ");
+    return idx > 0 ? label.slice(0, idx) : f.origin;
   }
 
   function render() {
@@ -170,12 +302,13 @@
     if (!DATA) return;
 
     var flights = DATA.flights.filter(function (f) {
-      return filter === "all" || f.rating === filter;
+      var okRating = ratingFilter === "all" || f.rating === ratingFilter;
+      var okOrigin = originFilter === "all" || f.origin === originFilter;
+      return okRating && okOrigin;
     });
 
     empty.classList.toggle("hidden", flights.length > 0);
 
-    // Group into tiers, in the order defined by the data's tiers map.
     var tiers = DATA.tiers || {};
     var tierOrder = Object.keys(tiers);
     var groups = {};
@@ -188,7 +321,7 @@
       if (tierOrder.indexOf(t) === -1) tierOrder.push(t);
     });
 
-    // Per-tier stats from the full dataset (stable regardless of filter).
+    // Per-tier stats from the full dataset (stable regardless of filters).
     var tierStats = {};
     DATA.flights.forEach(function (f) {
       var t = f.tier || "other";
@@ -196,6 +329,8 @@
       s.sum += f.price; s.n += 1;
       if (s.min === null || f.price < s.min) { s.min = f.price; s.cheapestRoute = f.route; }
     });
+
+    var cardIndex = 0;
 
     tierOrder.forEach(function (t) {
       var group = groups[t];
@@ -217,97 +352,140 @@
       h.appendChild(st);
       list.appendChild(h);
       group.forEach(function (f) {
-        renderCard(f, f.route === s.cheapestRoute);
+        list.appendChild(buildCard(f, f.route === s.cheapestRoute, cardIndex++));
       });
     });
+  }
 
-    function renderCard(f, isCheapest) {
-      var card = document.createElement("div");
-      card.className = "flight" + (isCheapest ? " cheapest" : "");
+  function buildCard(f, isCheapest, index) {
+    var card = document.createElement("div");
+    card.className = "flight" + (isCheapest ? " cheapest" : "") + (f.link ? " tappable" : "");
+    card.style.animationDelay = Math.min(index * 30, 300) + "ms";
 
-      // Airline logo — clickable through to the airline's website.
-      var logos = DATA.logos || {};
-      var logo = document.createElement(f.airline_url ? "a" : "span");
-      logo.className = "logo";
-      logo.title = f.airline + (f.airline_url ? " — open airline website" : "");
-      if (f.airline_url) {
-        logo.href = f.airline_url;
-        logo.target = "_blank";
-        logo.rel = "noopener";
-      }
-      if (f.airline_code && logos[f.airline_code]) {
-        var img = document.createElement("img");
-        img.src = logos[f.airline_code];
-        img.alt = f.airline;
-        logo.appendChild(img);
-      } else {
-        var codeSpan = document.createElement("span");
-        codeSpan.className = "code";
-        codeSpan.textContent = f.airline_code || "✈";
-        logo.appendChild(codeSpan);
-      }
-      card.appendChild(logo);
-
-      var main = document.createElement("div");
-      main.className = "main";
-      var route = document.createElement("div");
-      route.className = "route";
-      route.textContent = f.label || f.route;
-      var meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = f.airline + " · " + (f.nonstop ? "Nonstop" : "Connecting") + " · Departs " + f.departure_date;
-      var badge = document.createElement("span");
-      badge.className = "badge " + f.rating;
-      badge.textContent = fmt[f.rating] || f.rating;
-      main.appendChild(route);
-      main.appendChild(meta);
-      main.appendChild(badge);
-      if (isCheapest) {
-        var star = document.createElement("span");
-        star.className = "badge cheapest";
-        star.textContent = "⭐ Cheapest";
-        main.appendChild(star);
-      }
-
-      var pb = document.createElement("div");
-      pb.className = "priceblock";
-      var price = document.createElement("div");
-      price.className = "price";
-      // Price links through to the fare's source search on Aviasales.
-      var priceInner = document.createElement(f.link ? "a" : "span");
-      priceInner.textContent = money(f.price, f.currency);
-      if (f.link) {
-        priceInner.href = f.link;
-        priceInner.target = "_blank";
-        priceInner.rel = "noopener";
-        priceInner.title = "View this fare";
-      }
-      price.appendChild(priceInner);
-      var tr = document.createElement("span");
-      tr.className = "trend " + f.trend;
-      tr.textContent = trendArrow[f.trend] || "";
-      price.appendChild(tr);
-      pb.appendChild(price);
-      if (f.median_price != null) {
-        var med = document.createElement("div");
-        med.className = "median";
-        med.textContent = "typical " + money(f.median_price, f.currency);
-        pb.appendChild(med);
-      }
-
-      card.appendChild(main);
-      card.appendChild(pb);
-      list.appendChild(card);
+    if (f.link) {
+      card.setAttribute("role", "link");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", f.label + ", " + money(f.price, f.currency) + ", view fare");
+      var open = function () { window.open(f.link, "_blank", "noopener"); };
+      card.addEventListener("click", open);
+      card.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+      });
     }
+
+    // Airline logo — clickable through to the airline's website.
+    var logos = DATA.logos || {};
+    var logo = document.createElement(f.airline_url ? "a" : "span");
+    logo.className = "logo";
+    logo.title = f.airline + (f.airline_url ? " — open airline website" : "");
+    if (f.airline_url) {
+      logo.href = f.airline_url;
+      logo.target = "_blank";
+      logo.rel = "noopener";
+      logo.addEventListener("click", function (e) { e.stopPropagation(); });
+    }
+    if (f.airline_code && logos[f.airline_code]) {
+      var img = document.createElement("img");
+      img.src = logos[f.airline_code];
+      img.alt = f.airline;
+      img.loading = "lazy";
+      logo.appendChild(img);
+    } else {
+      var codeSpan = document.createElement("span");
+      codeSpan.className = "code";
+      codeSpan.textContent = f.airline_code || "✈";
+      logo.appendChild(codeSpan);
+    }
+    card.appendChild(logo);
+
+    var main = document.createElement("div");
+    main.className = "main";
+    var route = document.createElement("div");
+    route.className = "route";
+    route.textContent = f.label || f.route;
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = f.airline + " · " + (f.nonstop ? "Nonstop" : "Connecting") + " · " + f.departure_date;
+    main.appendChild(route);
+    main.appendChild(meta);
+    var badge = document.createElement("span");
+    badge.className = "badge " + f.rating;
+    badge.textContent = fmt[f.rating] || f.rating;
+    main.appendChild(badge);
+    if (isCheapest) {
+      var star = document.createElement("span");
+      star.className = "badge cheapest";
+      star.textContent = "⭐ Cheapest";
+      main.appendChild(star);
+    }
+    card.appendChild(main);
+
+    var pb = document.createElement("div");
+    pb.className = "priceblock";
+    var price = document.createElement("div");
+    price.className = "price";
+    var priceText = document.createElement("span");
+    priceText.textContent = money(f.price, f.currency);
+    price.appendChild(priceText);
+    var tr = document.createElement("span");
+    tr.className = "trend " + f.trend;
+    tr.textContent = trendArrow[f.trend] || "";
+    price.appendChild(tr);
+    if (f.link) {
+      var chev = document.createElement("span");
+      chev.className = "chev";
+      chev.textContent = "›";
+      price.appendChild(chev);
+    }
+    pb.appendChild(price);
+    if (f.median_price != null) {
+      var med = document.createElement("div");
+      med.className = "median";
+      med.textContent = "typical " + money(f.median_price, f.currency);
+      pb.appendChild(med);
+    }
+    card.appendChild(pb);
+    return card;
+  }
+
+  function buildOriginFilter(data) {
+    var seen = {};
+    var origins = [];
+    data.flights.forEach(function (f) {
+      if (!seen[f.origin]) { seen[f.origin] = originLabel(f); origins.push(f.origin); }
+    });
+    if (origins.length < 2) return;
+    var seg = document.getElementById("origin-filter");
+    seg.innerHTML = "";
+    var all = document.createElement("button");
+    all.dataset.origin = "all";
+    all.textContent = "All airports";
+    all.className = "active";
+    seg.appendChild(all);
+    origins.forEach(function (o) {
+      var b = document.createElement("button");
+      b.dataset.origin = o;
+      b.textContent = seen[o];
+      seg.appendChild(b);
+    });
+    seg.classList.remove("hidden");
+    seg.addEventListener("click", function (e) {
+      if (e.target.tagName !== "BUTTON") return;
+      originFilter = e.target.dataset.origin;
+      seg.querySelectorAll("button").forEach(function (b) {
+        b.classList.toggle("active", b === e.target);
+      });
+      render();
+    });
   }
 
   function hydrate(data) {
     DATA = data;
     document.getElementById("loading").classList.add("hidden");
-    document.getElementById("updated").textContent =
-      "Last updated: " + new Date(data.updated).toLocaleString();
+    document.getElementById("updated").textContent = relativeTime(data.updated);
     document.getElementById("depart").textContent =
-      "Cheapest recently-seen one-way fares for " + data.departure_date;
+      "Cheapest recently-seen one-way fares for " + data.departure_date +
+      ", rated against each route's history.";
 
     var s = data.summary || {};
     document.getElementById("c-routes").textContent = s.routes_tracked != null ? s.routes_tracked : "–";
@@ -319,13 +497,15 @@
     });
     document.getElementById("c-cheap-domestic").textContent = money(cheap.domestic, data.currency);
     document.getElementById("c-cheap-retirement").textContent = money(cheap.retirement, data.currency);
+
+    buildOriginFilter(data);
     render();
   }
 
-  document.getElementById("filters").addEventListener("click", function (e) {
+  document.getElementById("rating-filter").addEventListener("click", function (e) {
     if (e.target.tagName !== "BUTTON") return;
-    filter = e.target.dataset.filter;
-    document.querySelectorAll(".filters button").forEach(function (b) {
+    ratingFilter = e.target.dataset.filter;
+    this.querySelectorAll("button").forEach(function (b) {
       b.classList.toggle("active", b === e.target);
     });
     render();
