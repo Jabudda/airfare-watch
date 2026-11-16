@@ -55,6 +55,13 @@
   .counter.cheap .num { color: var(--accent); }
 
   .flight-list { display: flex; flex-direction: column; gap: 12px; }
+  .tier-header {
+    font-size: 1.05rem; font-weight: 700; letter-spacing: .4px;
+    margin: 14px 0 2px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border); color: var(--text);
+  }
+  .tier-header:first-child { margin-top: 0; }
+  .tier-header .count { color: var(--muted); font-weight: 400; font-size: .85rem; margin-left: 8px; }
   .flight {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 16px; display: flex; align-items: center; gap: 14px;
@@ -155,7 +162,34 @@
 
     empty.classList.toggle("hidden", flights.length > 0);
 
+    // Group into tiers, in the order defined by the data's tiers map.
+    var tiers = DATA.tiers || {};
+    var tierOrder = Object.keys(tiers);
+    var groups = {};
     flights.forEach(function (f) {
+      var t = f.tier || "other";
+      if (!groups[t]) groups[t] = [];
+      groups[t].push(f);
+    });
+    Object.keys(groups).forEach(function (t) {
+      if (tierOrder.indexOf(t) === -1) tierOrder.push(t);
+    });
+
+    tierOrder.forEach(function (t) {
+      var group = groups[t];
+      if (!group || !group.length) return;
+      var h = document.createElement("div");
+      h.className = "tier-header";
+      h.textContent = tiers[t] || t;
+      var c = document.createElement("span");
+      c.className = "count";
+      c.textContent = group.length + (group.length === 1 ? " route" : " routes");
+      h.appendChild(c);
+      list.appendChild(h);
+      group.forEach(renderCard);
+    });
+
+    function renderCard(f) {
       var card = document.createElement("div");
       card.className = "flight";
 
@@ -194,7 +228,7 @@
       card.appendChild(main);
       card.appendChild(pb);
       list.appendChild(card);
-    });
+    }
   }
 
   function hydrate(data) {

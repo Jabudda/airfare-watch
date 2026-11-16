@@ -224,6 +224,7 @@ def main():
             "airline": airline,
             "nonstop": nonstop,
             "departure_date": depart_date,
+            "tier": route.get("tier", "other"),
             "rating": rate(price, past),
             "trend": trend(price, past),
             "median_price": round(median(past), 2) if len(past) >= 3 else None,
@@ -242,6 +243,7 @@ def main():
         "updated": now_iso,
         "departure_date": month,
         "currency": currency,
+        "tiers": config.get("tiers", {}),
         "summary": summary,
         "flights": sorted(flights, key=lambda f: f["price"]),
     })
