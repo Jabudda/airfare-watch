@@ -5,8 +5,8 @@ Automated airline price tracker, built in the same pattern as
 a scheduled scraper writes JSON data into the repo, and a GitHub Pages
 dashboard displays it with filters and summary counters.
 
-Every 6 hours the scraper pulls the **cheapest current fare** for each route
-you track, compares it to that route's recent price history, and rates it:
+Every 6 hours the scraper pulls the **cheapest recently-seen fare** for each
+route you track, compares it to that route's recent price history, and rates it:
 
 | Rating | Meaning |
 |---|---|
@@ -16,6 +16,16 @@ you track, compares it to that route's recent price history, and rates it:
 
 Trend arrows (▲▼) show movement since the previous scan.
 
+## Data source
+
+Fares come from the **Travelpayouts (Aviasales) Data API** — free, no credit
+card, generous rate limits. It returns prices that real users recently found
+in searches (cached up to ~7 days), not live bookable quotes. That's ideal
+for spotting deals and price trends, which is what this dashboard is for.
+
+> Note: Amadeus's free Self-Service API — the usual pick for projects like
+> this — was decommissioned on July 17, 2026, and is now enterprise-only.
+
 ## How it works
 
 ```
@@ -24,54 +34,49 @@ routes.json ──► scraper.py ──► data/prices.json ──► index.html
                     └──► data/history.json  (rolling price history per route)
 ```
 
-- **`scraper.py`** — calls the Amadeus Flight Offers Search API (free test
-  environment), no external Python dependencies.
+- **`scraper.py`** — calls the Aviasales price-calendar API, no external
+  Python dependencies.
 - **`.github/workflows/update-prices.yml`** — runs the scraper every 6 hours
   and commits the updated data.
 - **`index.html`** — static dashboard that fetches `data/prices.json`.
 
 ## Setup
 
-1. **Get free API credentials** (takes ~2 minutes)
-   - Sign up at [developers.amadeus.com](https://developers.amadeus.com)
-   - Create a Self-Service app → you get an **API Key** and **API Secret** instantly
-   - The test environment is free with a monthly quota — plenty for a
-     6-hourly scan of a handful of routes
+1. **Get a free API token** (takes ~2 minutes)
+   - Sign up at [travelpayouts.com](https://www.travelpayouts.com) (free
+     affiliate network account, no credit card)
+   - Copy your token from [app.travelpayouts.com/profile/api-token](https://app.travelpayouts.com/profile/api-token)
 
-2. **Create the GitHub repo** and push these files.
+2. **Add the repo secret** — Settings → Secrets and variables → Actions:
+   - `TRAVELPAYOUTS_TOKEN` = your token
 
-3. **Add repo secrets** — Settings → Secrets and variables → Actions:
-   - `AMADEUS_CLIENT_ID` = your API Key
-   - `AMADEUS_CLIENT_SECRET` = your API Secret
-
-4. **Enable GitHub Pages** — Settings → Pages → deploy from the `main`
+3. **Enable GitHub Pages** — Settings → Pages → deploy from the `main`
    branch, root folder.
 
-5. **Run it once** — Actions tab → "Update airfare data" → Run workflow.
+4. **Run it once** — Actions tab → "Update airfare data" → Run workflow.
    (Until then the dashboard shows the sample data included in `data/`.)
 
 ## Customizing routes
 
-Edit `routes.json` — each route is an origin/destination IATA airport code:
+Edit `routes.json` — use IATA **city codes** for best coverage (CHI, NYC,
+LON, LAX…); airport codes also work:
 
 ```json
-{ "origin": "ORD", "destination": "LHR", "label": "Chicago → London" }
+{ "origin": "CHI", "destination": "LON", "label": "Chicago → London" }
 ```
 
 Other knobs in `routes.json`:
-- `days_ahead` — how far out the departure date is (default 21)
-- `currency`, `adults`, `max_history_per_route`
+- `days_ahead` — targets the month that many days out (default 21)
+- `currency`, `max_history_per_route`
 
-> **Test environment note:** Amadeus's free test tier uses a cached subset of
-> real inventory. Large hubs (ORD, JFK, LAX, LON, PAR, MAD…) work well; small
-> airports may return no results. For live production fares, switch
-> `API_HOST` in `scraper.py` to `https://api.amadeus.com` and use production
-> credentials (pay-as-you-go beyond the free quota).
+If a route returns "no cached fares," it means no Aviasales user searched it
+recently — popular routes almost always have data; thin routes may be
+intermittent.
 
 ## Local testing
 
 ```bash
-python3 scraper.py --sample     # demo data, no API key needed
+python3 scraper.py --sample     # demo data, no token needed
 python3 -m http.server          # then open http://localhost:8000
 ```
 

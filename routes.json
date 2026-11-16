@@ -1,16 +1,15 @@
 {
   "currency": "USD",
   "days_ahead": 21,
-  "adults": 1,
   "max_history_per_route": 60,
   "routes": [
-    { "origin": "ORD", "destination": "LAX", "label": "Chicago → Los Angeles" },
-    { "origin": "ORD", "destination": "JFK", "label": "Chicago → New York" },
-    { "origin": "ORD", "destination": "MIA", "label": "Chicago → Miami" },
-    { "origin": "ORD", "destination": "DEN", "label": "Chicago → Denver" },
-    { "origin": "ORD", "destination": "CUN", "label": "Chicago → Cancún" },
-    { "origin": "ORD", "destination": "LHR", "label": "Chicago → London" },
-    { "origin": "ORD", "destination": "LAS", "label": "Chicago → Las Vegas" },
-    { "origin": "ORD", "destination": "MCO", "label": "Chicago → Orlando" }
+    { "origin": "CHI", "destination": "LAX", "label": "Chicago → Los Angeles" },
+    { "origin": "CHI", "destination": "NYC", "label": "Chicago → New York" },
+    { "origin": "CHI", "destination": "MIA", "label": "Chicago → Miami" },
+    { "origin": "CHI", "destination": "DEN", "label": "Chicago → Denver" },
+    { "origin": "CHI", "destination": "CUN", "label": "Chicago → Cancún" },
+    { "origin": "CHI", "destination": "LON", "label": "Chicago → London" },
+    { "origin": "CHI", "destination": "LAS", "label": "Chicago → Las Vegas" },
+    { "origin": "CHI", "destination": "ORL", "label": "Chicago → Orlando" }
   ]
 }

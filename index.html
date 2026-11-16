@@ -126,8 +126,8 @@
   <div class="flight-list" id="list"></div>
 
   <footer>
-    Fares sourced from the Amadeus flight data API · Ratings compare today's fare to each route's recent history<br>
-    Updates automatically every 6 hours · Prices are the cheapest found at scan time and may change
+    Fares from the Travelpayouts (Aviasales) data API — prices recently found by real searches, not live quotes<br>
+    Updates automatically every 6 hours · Ratings compare each fare to the route's recent history
   </footer>
 </div>
 
@@ -203,7 +203,7 @@
     document.getElementById("updated").textContent =
       "Last updated: " + new Date(data.updated).toLocaleString();
     document.getElementById("depart").textContent =
-      "Showing cheapest one-way fares departing " + data.departure_date;
+      "Cheapest recently-seen one-way fares for " + data.departure_date;
 
     var s = data.summary || {};
     document.getElementById("c-routes").textContent = s.routes_tracked != null ? s.routes_tracked : "–";

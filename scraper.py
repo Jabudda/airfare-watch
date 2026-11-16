@@ -2,16 +2,20 @@
 """
 Airfare Watch — airline price scraper.
 
-Pulls the cheapest current fare for each route in routes.json from the
-Amadeus Self-Service API (free test environment), keeps a rolling price
-history, rates each fare against its route's historical median, and writes
-data/prices.json for the dashboard (index.html).
+Pulls the cheapest recently-seen fare for each route in routes.json from the
+Travelpayouts (Aviasales) Data API, keeps a rolling price history, rates each
+fare against its route's historical median, and writes data/prices.json for
+the dashboard (index.html).
+
+Prices are cached fares from recent Aviasales user searches — real prices
+people recently found, not live bookable quotes. Perfect for deal-watching.
 
 Usage:
-    AMADEUS_CLIENT_ID=xxx AMADEUS_CLIENT_SECRET=yyy python3 scraper.py
-    python3 scraper.py --sample        # generate realistic demo data, no API key needed
+    TRAVELPAYOUTS_TOKEN=xxx python3 scraper.py
+    python3 scraper.py --sample        # generate realistic demo data, no token needed
 
-Get free API credentials at https://developers.amadeus.com (instant signup).
+Get a free token: sign up at https://www.travelpayouts.com (free, no credit
+card), then copy your token from https://app.travelpayouts.com/profile/api-token
 """
 
 import argparse
@@ -31,7 +35,17 @@ ROUTES_FILE = BASE_DIR / "routes.json"
 PRICES_FILE = DATA_DIR / "prices.json"
 HISTORY_FILE = DATA_DIR / "history.json"
 
-API_HOST = "https://test.api.amadeus.com"  # switch to https://api.amadeus.com for production
+API_URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
+
+# Friendly names for common carrier codes (API returns IATA codes).
+AIRLINES = {
+    "UA": "United", "AA": "American", "DL": "Delta", "WN": "Southwest",
+    "NK": "Spirit", "F9": "Frontier", "B6": "JetBlue", "AS": "Alaska",
+    "BA": "British Airways", "VS": "Virgin Atlantic", "AC": "Air Canada",
+    "AM": "Aeroméxico", "Y4": "Volaris", "VB": "Viva Aerobus",
+    "IB": "Iberia", "AY": "Finnair", "LH": "Lufthansa", "AF": "Air France",
+    "KL": "KLM", "EI": "Aer Lingus", "TP": "TAP Portugal",
+}
 
 
 # ---------------------------------------------------------------- helpers
@@ -51,75 +65,48 @@ def save_json(path, obj):
         f.write("\n")
 
 
-def http_post_form(url, fields):
-    data = urllib.parse.urlencode(fields).encode()
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Content-Type", "application/x-www-form-urlencoded")
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.load(resp)
-
-
-def http_get_json(url, params, token):
+def http_get_json(url, params):
     full = url + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(full)
-    req.add_header("Authorization", f"Bearer {token}")
+    req = urllib.request.Request(full, headers={"User-Agent": "airfare-watch"})
     with urllib.request.urlopen(req, timeout=60) as resp:
         return json.load(resp)
 
 
-# ---------------------------------------------------------------- amadeus
+# ---------------------------------------------------------------- fetch
 
-def get_token():
-    client_id = os.environ.get("AMADEUS_CLIENT_ID")
-    client_secret = os.environ.get("AMADEUS_CLIENT_SECRET")
-    if not client_id or not client_secret:
-        sys.exit(
-            "Missing AMADEUS_CLIENT_ID / AMADEUS_CLIENT_SECRET environment variables.\n"
-            "Get free credentials at https://developers.amadeus.com, or run with --sample."
-        )
-    resp = http_post_form(
-        f"{API_HOST}/v1/security/oauth2/token",
-        {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-        },
-    )
-    return resp["access_token"]
+def fetch_cheapest_fare(token, origin, destination, month, currency):
+    """Return (price, airline, nonstop, depart_date) or None.
 
-
-def fetch_cheapest_offer(token, origin, destination, depart_date, adults, currency):
-    """Return (price: float, carrier_code: str, nonstop: bool) or None."""
+    Queries the Aviasales price-calendar cache for the cheapest fare found
+    recently for this route in the given month (YYYY-MM).
+    """
     try:
-        resp = http_get_json(
-            f"{API_HOST}/v2/shopping/flight-offers",
-            {
-                "originLocationCode": origin,
-                "destinationLocationCode": destination,
-                "departureDate": depart_date,
-                "adults": adults,
-                "currencyCode": currency,
-                "max": 10,
-            },
-            token,
-        )
+        resp = http_get_json(API_URL, {
+            "origin": origin,
+            "destination": destination,
+            "departure_at": month,
+            "one_way": "true",
+            "sorting": "price",
+            "limit": 10,
+            "currency": currency.lower(),
+            "token": token,
+        })
     except Exception as e:  # noqa: BLE001 — log and keep scraping other routes
         print(f"  ! {origin}->{destination}: {e}", file=sys.stderr)
         return None
 
     offers = resp.get("data") or []
     if not offers:
+        print(f"  - {origin}->{destination}: no cached fares", file=sys.stderr)
         return None
 
-    carriers = (resp.get("dictionaries") or {}).get("carriers", {})
-    best = min(offers, key=lambda o: float(o["price"]["grandTotal"]))
-    price = float(best["price"]["grandTotal"])
-    itinerary = best["itineraries"][0]
-    segments = itinerary["segments"]
-    code = segments[0]["carrierCode"]
-    airline = carriers.get(code, code)
-    nonstop = len(segments) == 1
-    return price, airline.title() if airline.isupper() and len(airline) > 3 else airline, nonstop
+    best = min(offers, key=lambda o: float(o["price"]))
+    price = float(best["price"])
+    code = best.get("airline", "")
+    airline = AIRLINES.get(code, code or "Various")
+    nonstop = best.get("transfers", 1) == 0
+    depart = (best.get("departure_at") or month)[:10]
+    return price, airline, nonstop, depart
 
 
 # ---------------------------------------------------------------- ratings
@@ -158,8 +145,8 @@ def trend(price, history_prices):
 SAMPLE_AIRLINES = ["United", "American", "Delta", "Spirit", "Frontier", "British Airways"]
 
 SAMPLE_BASE = {  # rough realistic one-way fares
-    "LAX": 128, "JFK": 112, "MIA": 98, "DEN": 84,
-    "CUN": 215, "LHR": 480, "LAS": 76, "MCO": 92,
+    "LAX": 128, "NYC": 112, "MIA": 98, "DEN": 84,
+    "CUN": 215, "LON": 480, "LAS": 76, "ORL": 92,
 }
 
 
@@ -182,14 +169,23 @@ def main():
 
     currency = config.get("currency", "USD")
     days_ahead = int(config.get("days_ahead", 21))
-    adults = int(config.get("adults", 1))
     max_history = int(config.get("max_history_per_route", 60))
 
-    depart_date = (datetime.now(timezone.utc) + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+    target = datetime.now(timezone.utc) + timedelta(days=days_ahead)
+    month = target.strftime("%Y-%m")
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    token = None
+    if not args.sample:
+        token = os.environ.get("TRAVELPAYOUTS_TOKEN")
+        if not token:
+            sys.exit(
+                "Missing TRAVELPAYOUTS_TOKEN environment variable.\n"
+                "Get a free token at https://www.travelpayouts.com "
+                "(profile → API token), or run with --sample."
+            )
+
     history = load_json(HISTORY_FILE, {})
-    token = None if args.sample else get_token()
 
     flights = []
     for route in config["routes"]:
@@ -201,17 +197,19 @@ def main():
             # Seed believable history so ratings/trends show up in the demo.
             if key not in history:
                 history[key] = [sample_observation(dest) for _ in range(10)]
-            price = sample_observation(dest)
-            airline = random.choice(SAMPLE_AIRLINES)
-            nonstop = random.random() > 0.4
-            result = (price, airline, nonstop)
+            result = (
+                sample_observation(dest),
+                random.choice(SAMPLE_AIRLINES),
+                random.random() > 0.4,
+                target.strftime("%Y-%m-%d"),
+            )
         else:
-            result = fetch_cheapest_offer(token, origin, dest, depart_date, adults, currency)
+            result = fetch_cheapest_fare(token, origin, dest, month, currency)
 
         if result is None:
             continue
 
-        price, airline, nonstop = result
+        price, airline, nonstop, depart_date = result
         past = history.get(key, [])
         flights.append({
             "route": key,
@@ -239,7 +237,7 @@ def main():
 
     save_json(PRICES_FILE, {
         "updated": now_iso,
-        "departure_date": depart_date,
+        "departure_date": month,
         "currency": currency,
         "summary": summary,
         "flights": sorted(flights, key=lambda f: f["price"]),
