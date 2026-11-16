@@ -119,6 +119,7 @@
     font-weight: 600;
   }
   .segment button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .segment button.dimmed { opacity: .4; }
 
   /* ------- tier sections ------- */
   .tier-header {
@@ -307,6 +308,14 @@
       return okRating && okOrigin;
     });
 
+    if (flights.length === 0) {
+      var anyRated = DATA.flights.some(function (f) { return f.rating !== "unrated"; });
+      if (ratingFilter !== "all" && !anyRated) {
+        empty.textContent = "No rated fares yet — ratings appear once each route has a few scans of price history (about a day). Check back soon!";
+      } else {
+        empty.textContent = "No flights match the selected filters.";
+      }
+    }
     empty.classList.toggle("hidden", flights.length > 0);
 
     var tiers = DATA.tiers || {};
@@ -499,6 +508,15 @@
     document.getElementById("c-cheap-retirement").textContent = money(cheap.retirement, data.currency);
 
     buildOriginFilter(data);
+
+    // Dim rating filters that currently have no matching fares.
+    var counts = {};
+    data.flights.forEach(function (f) { counts[f.rating] = (counts[f.rating] || 0) + 1; });
+    document.querySelectorAll("#rating-filter button").forEach(function (b) {
+      var k = b.dataset.filter;
+      b.classList.toggle("dimmed", k !== "all" && !counts[k]);
+    });
+
     render();
   }
 
